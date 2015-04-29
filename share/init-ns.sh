@@ -89,6 +89,10 @@ bind_end
 
 hostname -F /etc/hostname
 ip link set lo up
+ip link add eth0 type veth peer name eth1
+ip addr add 10.0.0.1/24 dev eth0
+ip link set eth0 up
+ip route add default dev lo
 
 reset_env                          \
   USERNS_NAME="${USERNS_NAME}"     \

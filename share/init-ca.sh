@@ -9,7 +9,7 @@ CACERT="${ROOT}/ca.crt"
 CAPEM="${ROOT}/ca.pem"
 
 CANAME="MinecraftCacheCA"
-DNSNAMES='s3.amazonaws.com,account.mojang.com,authserver.mojang.com,libraries.minecraft.net,mcoapi.minecraft.net,peoapi.minecraft.net'
+DNSNAMES='s3.amazonaws.com,account.mojang.com,authserver.mojang.com,libraries.minecraft.net,mcoapi.minecraft.net,peoapi.minecraft.net,sessionserver.mojang.com'
 SUBJECT="CN=Minecraft Cache CA"
 
 mkdir -p "${NSSDIR}"
