@@ -1,0 +1,14 @@
+{application, ercraft,
+ [
+  {description, "ErCraft"},
+  {vsn, "0.0.1"},
+  {modules, []},
+  {registered, [ercraft_sup]},
+  {applications, [kernel, stdlib, crypto, inets]},
+  {mod, {ercraft_app, []}},
+  {env,
+   [
+   ]
+  }
+ ]
+}.
