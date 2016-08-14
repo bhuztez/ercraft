@@ -49,6 +49,8 @@ handle_query(
     case parse_question(Data) of
         {Name, 1, 1} ->
             {reply, format_response(ID, Name)};
+        {Name, 28, 1} ->
+            {reply, format_empty_response(ID, Name)};
         _ ->
             noreply
     end;
@@ -88,3 +90,13 @@ format_response(ID, Name) ->
         <<QName/binary, 1:16, 1:16, 3600:32,
           4:16, 127, 0, 0, 1>>,
     [Header, Question, Answer].
+
+
+format_empty_response(ID, Name) ->
+    Header =
+        <<ID:16, 1:1, 0:4, 0:1, 0:1, 1:1, 1:1, 0:1, 0:1, 0:1,
+          0:4, 1:16, 0:16, 0:16, 0:16>>,
+    QName = format_name(Name),
+    Question =
+        <<QName/binary, 28:16, 1:16>>,
+    [Header, Question].

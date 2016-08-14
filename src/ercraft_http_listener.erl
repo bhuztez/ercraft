@@ -71,7 +71,7 @@ http_response(Socket, Code, ContentType, Headers, Body) ->
            <<"\r\n">>, Body]).
 
 
-file_response(Socket, Filename, Headers) ->
+file_response(Socket, Filename, ContentType, Headers) ->
     case filelib:is_file(Filename) of
         false ->
             http_response(
@@ -86,12 +86,16 @@ file_response(Socket, Filename, Headers) ->
                    Socket,
                    [<<"HTTP/1.1 200 OK\r\n">>,
                     <<"Connection: close\r\n">>,
-                    <<"Content-Type: application/octet-stream\r\n">>,
+                    <<"Content-Type: ">>, ContentType, <<"\r\n">>,
                     <<"Content-Length: ">>, integer_to_binary(Size), <<"\r\n">>,
                     Headers,
                     <<"\r\n">>]),
             {ok, _} = file:sendfile(Filename, Socket)
     end.
+
+
+file_response(Socket, Filename, Headers) ->
+    file_response(Socket, Filename, <<"application/octet-stream">>, Headers).
 
 
 json_response(Socket, Code, Body) ->
@@ -154,6 +158,21 @@ handle_request(Socket, 'GET', "resources.download.minecraft.net", {abs_path, Pat
       ".cache/resources.download.minecraft.net" ++ Path,
       []);
 
+handle_request(Socket, 'GET', "launchermeta.mojang.com", {abs_path, Path}, {1,1}, _Headers) ->
+    io:format("download launchermeta: ~p ~n", [Path]),
+    file_response(
+      Socket,
+      ".cache/launchermeta.mojang.com" ++ Path,
+      []);
+
+handle_request(Socket, 'GET', "launcher.mojang.com", {abs_path, Path}, {1,1}, _Headers) ->
+    io:format("download launcher: ~p ~n", [Path]),
+    file_response(
+      Socket,
+      ".cache/launcher.mojang.com" ++ Path,
+      []);
+
+
 handle_request(Socket, 'POST', "authserver.mojang.com", {abs_path, Path}, {1,1}, Headers) ->
     case read_json_body(Socket, Headers) of
         error ->
@@ -187,7 +206,6 @@ handle_request(Socket, 'GET', "mcupdate.tumblr.com", {abs_path, "/"}, {1,1}, _He
 handle_request(Socket, Method, Host, Path, _Version, _Headers) ->
     io:format("HTTP: ~p ~p ~p~n", [Method, Host, Path]),
     http_response(Socket, 500, <<"text/html">>, [], <<"<h1>500 Internal Server Error</h1>">>).
-
 
 
 handle_authserver(Socket, "/authenticate", _Headers, {struct, Body}) ->

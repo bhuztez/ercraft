@@ -105,4 +105,6 @@ reset_env                          \
   TERM="${TERM}"                   \
   DISPLAY=":0"                     \
 
+export _JAVA_OPTIONS=-Djavax.net.ssl.trustStore="${HOME}/.cert/cacert"
+stud --config=stud.conf
 exec "$@"

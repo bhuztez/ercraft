@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+if [ ! -e .cert ]
+then
 ROOT="$(pwd)/.cert"
 
 NSSDIR="${ROOT}"
@@ -9,7 +11,7 @@ CACERT="${ROOT}/ca.crt"
 CAPEM="${ROOT}/ca.pem"
 
 CANAME="MinecraftCacheCA"
-DNSNAMES='s3.amazonaws.com,account.mojang.com,authserver.mojang.com,libraries.minecraft.net,mcoapi.minecraft.net,peoapi.minecraft.net,sessionserver.mojang.com'
+DNSNAMES='s3.amazonaws.com,*.mojang.com,*.minecraft.net'
 SUBJECT="CN=Minecraft Cache CA"
 
 mkdir -p "${NSSDIR}"
@@ -24,6 +26,7 @@ certutil -L -d "${NSSDIR}" -a -n "${CANAME}" > "${CACERT}"
 
 keytool -import -storepass qwerty -noprompt -trustcacerts -file "${CACERT}" -alias "${CANAME}" -keystore "${KEYSTORE}"
 pk12util -o /dev/stdout -n "${CANAME}" -d "${NSSDIR}" -k "${PASSWD}" -W '' | openssl pkcs12 -passin 'pass:' -nodes -out "${CAPEM}"
+fi
 
-
-# java -Djavax.net.ssl.trustStore="${KEYSTORE}" -jar Minecraft.jar
+echo "run 'userns connect minecraft' to start a shell in this namespace"
+userns spawn -n minecraft -d localdomain --user --net -- ./init-ns.sh userns listen

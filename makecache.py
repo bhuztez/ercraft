@@ -48,8 +48,10 @@ def fetchfile(url):
     return fullpath
 
 
-def readjson(url):
+def readjson(url, sha1=None):
     fullpath = fetchfile(url)
+    if(sha1 is not None):
+        verify_sha1(url, sha1)
     with open(fullpath, 'r') as f:
         return json.load(f)
 
@@ -74,15 +76,17 @@ def verify_sha1(url, sha1):
 DOWNLOAD = "http://s3.amazonaws.com/Minecraft.Download"
 RESOURCES = "http://resources.download.minecraft.net"
 LIBRARIES = "https://libraries.minecraft.net"
+META = "https://launchermeta.mojang.com"
 
 fetchfile(DOWNLOAD + "/launcher/Minecraft.jar")
 fetchfile(DOWNLOAD + "/launcher/launcher.pack.lzma")
-versions = readjson(DOWNLOAD + "/versions/versions.json")
+versions = readjson(META + "/mc/game/version_manifest.json")
 
 version = versions["latest"]["release"]
-latest_version = readjson(DOWNLOAD + "/versions/%s/%s.json" % (version, version))
-fetchfile(DOWNLOAD + "/versions/%s/%s.jar" % (version, version))
-fetchfile(DOWNLOAD + "/versions/%s/minecraft_server.%s.jar" % (version, version))
+latest_version = readjson({v["id"]:v["url"] for v in versions["versions"]}[version])
+verify_sha1(latest_version["downloads"]["client"]["url"], latest_version["downloads"]["client"]["sha1"])
+verify_sha1(latest_version["downloads"]["server"]["url"], latest_version["downloads"]["server"]["sha1"])
+verify_sha1(latest_version["logging"]["client"]["file"]["url"], latest_version["logging"]["client"]["file"]["sha1"])
 
 
 for library in latest_version["libraries"]:
@@ -99,27 +103,22 @@ for library in latest_version["libraries"]:
                 allow = allow1
                 break
 
-            allow = allow1 
+            allow = allow1
 
         if not allow:
             continue
 
     if "natives" in library:
-        native = "-" + library["natives"][OS]
+        artifact = library["downloads"]["classifiers"][library["natives"][OS]]
     else:
-        native = ""
-
-    url = "%s/%s/%s/%s/%s-%s%s.jar" % (LIBRARIES, package.replace(".","/"), name, version, name, version, native)
-    with open(fetchfile(url+".sha1"), "r") as f:
-        s = f.read().strip()
-    print 'LIBRARY:', url
-    verify_sha1(url, s)
+        artifact = library["downloads"]["artifact"]
+    print 'LIBRARY:', library["name"]
+    verify_sha1(artifact["url"], artifact["sha1"])
 
 
-indexes = readjson(DOWNLOAD + "/indexes/%s.json" % (latest_version["assets"],))
+index = readjson(latest_version["assetIndex"]["url"], latest_version["assetIndex"]["sha1"])
 
-
-for filename, asset in indexes["objects"].iteritems():
+for filename, asset in index["objects"].iteritems():
     h = asset["hash"]
     print 'ASSET:', filename
     verify_sha1(RESOURCES + "/%s/%s" % (h[:2], h), h)
