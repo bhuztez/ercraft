@@ -1,45 +1,25 @@
--module(ercraft_dns).
+-module(ercraft_meta_dns_handler).
 
--behaviour(supervisor_bridge).
+-export(
+   [start_listener/0,
+    handle_packet/4]).
 
--export([start_link/0]).
+start_listener() ->
+    ercraft_udp_listener:start(
+      53,
+      [binary,
+       {active, false},
+       {ip, {127,0,0,1}},
+       {reuseaddr, true}],
+      {?MODULE, handle_packet, []}).
 
--export([init/1, terminate/2]).
-
--export([loop/1]).
-
-
-start_link() ->
-    supervisor_bridge:start_link({local, ?MODULE}, ?MODULE, []).
-
-
-init([]) ->
-    {ok, Socket} =
-        gen_udp:open(
-          53,
-          [binary,
-           {active, false},
-           {ip, {127,0,0,1}},
-           {reuseaddr, true}]),
-    Pid = spawn_link(?MODULE, loop, [Socket]),
-    ok = gen_udp:controlling_process(Socket, Pid),
-    {ok, Pid, Socket}.
-
-
-terminate(_Reason, _State) ->
-    ok.
-
-
-loop(Socket) ->
-    {ok, {Addr, Port, Packet}} = gen_udp:recv(Socket, 1024),
+handle_packet(Socket, Addr, Port, Packet) ->
     case handle_query(Packet) of
         noreply ->
             ok;
         {reply, Data} ->
             gen_udp:send(Socket, Addr, Port, Data)
-    end,
-    loop(Socket).
-
+    end.
 
 handle_query(
   <<ID:16, 0:1, 0:4,
