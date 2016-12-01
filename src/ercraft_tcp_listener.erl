@@ -21,6 +21,8 @@ loop(Ref, Socket, Handler = {M,F,A}) ->
             {ok, Opts} = prim_inet:getopts(Socket, [active, nodelay, keepalive, delay_send, priority, tos]),
             ok = prim_inet:setopts(Conn, Opts),
             apply(M, F, [Conn|A]);
+        {Port, connected} ->
+            unlink(Port);
         Msg ->
             io:format("tcp unknown msg: ~p: ~p~n.", [self(), Msg])
     end,

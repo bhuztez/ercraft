@@ -12,11 +12,14 @@
 
 start(Conn, Handler) ->
     Pid = spawn(?MODULE, handle_connection, [Conn, Handler]),
-    gen_tcp:controlling_process(Conn, Pid),
     {ok, Pid}.
 
 
 handle_connection(Conn, {M,F,A}) ->
+    link(Conn),
+    {connected, Owner} = erlang:port_info(Conn, connected),
+    Conn ! {Owner, {connect, self()}},
+
     {ok, {http_request, Method, Path, Version}} = gen_tcp:recv(Conn, 0),
 
     Headers = recv_headers(Conn),
