@@ -6,6 +6,25 @@
 -packet_type(login).
 
 -login(
+   {disconnect, 0,
+    {record,
+     [{reason, string}]
+    }
+   }
+  ).
+
+-login(
+   {encryption_request, 1,
+    {record,
+     [{server_id, string},
+      {public_key, string},
+      {verify_token, string}
+     ]
+    }
+   }
+  ).
+
+-login(
    {login_success, 2,
     {record,
      [{uuid, string},

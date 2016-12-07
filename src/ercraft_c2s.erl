@@ -31,3 +31,13 @@
     }
    }
   ).
+
+-login(
+   {encryption_response, 1,
+    {record,
+     [{shared_secret, string},
+      {verify_token, string}
+     ]
+    }
+   }
+  ).
