@@ -101,9 +101,16 @@ login({login_success, _}, State = #{connection := Connection}) ->
 login({disconnect, #{reason := Reason}}, State) ->
     {stop, {disconnect, Reason}, State}.
 
-play(Event, State) ->
+play({keep_alive, _}, State) ->
+    {stop, exit, State};
+play({chunk_data, Map}, State = #{connection := Connection}) ->
+    io:format("chunk: ~p~n", [maps:remove(data, Map)]),
+    ercraft_transport:recv(Connection),
+    {next_state, play, State};
+play(Event, State = #{connection := Connection}) ->
     io:format("~p~n", [Event]),
-    {stop, exit, State}.
+    ercraft_transport:recv(Connection),
+    {next_state, play, State}.
 
 
 handle_event(_Event, StateName, State) ->

@@ -6,12 +6,16 @@
 encode(Packet, Mode, State) ->
     iolist_to_binary(do_encode(Packet, Mode, State)).
 
+encode(Packet, Mode, State, none) ->
+    encode(Packet, Mode, State);
 encode(Packet, Mode, State, Threshold) ->
     compress(do_encode(Packet, Mode, State), Threshold).
 
 decode(Bin, Mode, State) ->
     do_decode(Bin, Mode, State).
 
+decode(Bin, Mode, State, none) ->
+    decode(Bin, Mode, State);
 decode(Bin, Mode, State, _Threshold) ->
     do_decode(uncompress(Bin), Mode, State).
 
